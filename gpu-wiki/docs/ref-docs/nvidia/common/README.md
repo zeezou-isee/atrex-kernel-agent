@@ -62,4 +62,5 @@ General optimization reference articles for NVIDIA hardware, covering PTX, NCU p
 |-----------|-------------|
 | [sm90/](sm90/) | Hopper (SM90) specific articles |
 | [sm100/](sm100/) | Blackwell datacenter (SM100) architecture and optimization articles |
+| [sm103/](sm103/) | Blackwell Ultra (SM103 / B300) kernel research: hardware & ISA (TMEM, tcgen05, 2-CTA/CLC, NVFP4 K=96) + per-library sm_103a dispatch notes (CUTLASS, FA4, ThunderKittens, vLLM) |
 | [sm120/](sm120/) | Blackwell GeForce / RTX PRO (SM120) hardware specifications and architecture whitepaper |

@@ -1,0 +1,27 @@
+{
+  "_comment": "Merge these entries into the atrex Claude settings.json (usually <install-base>/.claude/settings.json, or ~/.claude/settings.json). They ADD a Stop (and optional SubagentStop) hook that runs the non-blocking kernel-experience extractor ALONGSIDE atrex's own gpu-kernel-optimizer hook. Keep both. The `_tag` marks these as ours for later removal. Replace <MEMORY_SKILL_DIR> with the absolute path to this memory-skill directory.",
+  "hooks": {
+    "Stop": [
+      {
+        "_tag": "kernel-experience-memory-hook-v1",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 <MEMORY_SKILL_DIR>/hooks/memory_extract_hook.py"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "_tag": "kernel-experience-memory-hook-v1",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 <MEMORY_SKILL_DIR>/hooks/memory_extract_hook.py"
+          }
+        ]
+      }
+    ]
+  }
+}
