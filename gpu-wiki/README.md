@@ -165,6 +165,13 @@ them from mapping keys. Evidence, retrieval metadata, rank decomposition, bridge
 commentary, and other engine-side fields are deliberately not served, so they
 cannot anchor AKA's judgement.
 
+AKA sets `ATREX_WIKI_PROFILE_ROOT` to the incumbent campaign workspace. Each
+`query_nl.py` invocation then writes one immutable, compact JSON event containing
+the request, normalized scope, returned canonical IDs, rank, and timing. Returned
+payloads and coding-agent sessions are not copied into this telemetry. Consumers
+outside AKA may set the same environment variable to an output directory they
+own; without it, querying remains read-only and creates no telemetry files.
+
 ### Direct structured queries
 
 Use the lower-level tools when the address is already known or a script needs a

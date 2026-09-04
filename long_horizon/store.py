@@ -41,6 +41,8 @@ class CampaignStore:
             f"/{VERIFY_DIR}/",
             f"/{main_adapter.STALL_STATE_FILE}",
             f"/{LIVE_MEMORY_FILE}",
+            "/.gpu_wiki_profile/",
+            "/trace-retention-manifest.json",
             # Episode evidence is archived by the supervisor and must never
             # become part of the candidate commit.
             "/plans/",

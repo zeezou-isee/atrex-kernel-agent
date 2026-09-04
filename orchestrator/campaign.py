@@ -108,6 +108,9 @@ _LONG_REVIEWER_SESSION_ENV = {
     "qoder": "ATREX_QODER_REVIEW_SESSION_FILE",
 }
 
+_WIKI_PROFILE_ROOT_ENV = "ATREX_WIKI_PROFILE_ROOT"
+_WIKI_TASK_ID_ENV = "ATREX_WIKI_TASK_ID"
+
 _FRAMEWORK_BASELINE_CORRECTNESS_REVIEW_TIMEOUT_S = 600
 _FRAMEWORK_BASELINE_CORRECTNESS_REVIEW_SCHEMA_VERSION = 3
 _FRAMEWORK_BASELINE_CORRECTNESS_REVIEW_PATH = Path(
@@ -375,6 +378,12 @@ class Campaign:
             environment[env_name] = str(state_file.resolve())
         if private_dir is not None:
             environment[ATREX_PRIVATE_REFERENCE_ENV] = str(private_dir)
+        # Query events from disposable episode worktrees must land in the
+        # incumbent workspace, where the completion hook can retain them.
+        environment[_WIKI_PROFILE_ROOT_ENV] = str(
+            (self.workspace / ".gpu_wiki_profile").resolve()
+        )
+        environment[_WIKI_TASK_ID_ENV] = self.campaign_name
         return environment
 
     def ensure_plan_reviewer_availability(self, *, episode_mode: str) -> None:
@@ -688,7 +697,10 @@ class Campaign:
         )
 
     def _link_runtime(self) -> None:
+        from long_horizon.store import CampaignStore
+
         self._assert_generalized_inputs_are_private()
+        CampaignStore.ensure_excluded(self.workspace)
         native_root = Path(self.atrex_bench_root) if self.atrex_bench_root else None
         link_runtime(self.workspace, native_root)
         install_workspace_policy(

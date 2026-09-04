@@ -97,6 +97,7 @@ try:
     )
     from .optimization_policy import OPTIMIZATION_MODE_CHOICES
     from .session_io import detect_arch, ensure_submodules
+    from .trace_retention import write_trace_retention_manifest
     from .operator_layout import (
         AGENT_PROBLEM_FILENAME,
         find_atrex_bench_root,
@@ -138,6 +139,9 @@ except ImportError:  # direct script execution: python orchestrator/optimize.py
     from orchestrator.session_io import (  # type: ignore[no-redef]
         detect_arch,
         ensure_submodules,
+    )
+    from orchestrator.trace_retention import (  # type: ignore[no-redef]
+        write_trace_retention_manifest,
     )
     from orchestrator.operator_layout import (  # type: ignore[no-redef]
         AGENT_PROBLEM_FILENAME,
@@ -761,25 +765,33 @@ def main(argv: Optional[list[str]] = None) -> int:
         full_episode_ask_qoder=args.full_episode_ask_qoder,
         convert_after=args.convert_after,
     )
-    if latest_version(campaign.workspace) < 0:
-        campaign.setup_baseline()
-    else:
-        print(
-            f"[orchestrator] resuming workspace at v{latest_version(campaign.workspace)}",
-            flush=True,
+    trace_status = "failed"
+    try:
+        if latest_version(campaign.workspace) < 0:
+            campaign.setup_baseline()
+        else:
+            print(
+                f"[orchestrator] resuming workspace at v{latest_version(campaign.workspace)}",
+                flush=True,
+            )
+            campaign._link_runtime()
+        baseline_coverage_problem = campaign._generalized_memory_coverage_problem(
+            read_memory(campaign.workspace, 0)
         )
-        campaign._link_runtime()
-    baseline_coverage_problem = campaign._generalized_memory_coverage_problem(
-        read_memory(campaign.workspace, 0)
-    )
-    if baseline_coverage_problem:
-        raise RuntimeError(
-            "generalized campaign baseline is incompatible with authoritative per-shape "
-            f"memory: {baseline_coverage_problem}; start a fresh workspace"
-        )
-    campaign.ensure_framework_baseline()
-    campaign.run()
-    return 0
+        if baseline_coverage_problem:
+            raise RuntimeError(
+                "generalized campaign baseline is incompatible with authoritative per-shape "
+                f"memory: {baseline_coverage_problem}; start a fresh workspace"
+            )
+        campaign.ensure_framework_baseline()
+        campaign.run()
+        trace_status = "completed"
+        return 0
+    except KeyboardInterrupt:
+        trace_status = "interrupted"
+        raise
+    finally:
+        write_trace_retention_manifest(campaign.workspace, trace_status)
 
 
 if __name__ == "__main__":
