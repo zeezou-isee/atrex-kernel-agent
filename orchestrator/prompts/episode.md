@@ -88,6 +88,13 @@ changes the expected result. Detailed within-episode journals remain archived un
 
 ## Wiki attribution contract
 
+At episode start, run exactly one bounded GPU Wiki query using the campaign's exact operator
+identifier rather than paraphrasing it:
+
+```bash
+python3 gpu-wiki/tools/query_nl.py "Target hardware {{PLATFORM}}, DSL {{FRAMEWORK}}. Optimize operator {{OPERATOR}} and retrieve techniques and pitfalls and hardware facts." --brief
+```
+
 GPU Wiki query responses emit a top-level `query_id`, and every returned record emits its own
 canonical `wiki_id` in `store::record` form. Copy those fields exactly; never reconstruct either
 value from a response mapping key or from prose. Whenever a returned record
@@ -96,7 +103,9 @@ that experiment's journal append. Each row must contain the response's emitted `
 actually returned record's emitted `wiki_id`, a disposition of `applied`, `partially_applied`,
 `reference_only`, or `rejected`, plus a
 short `use` and observable `evidence`. Preserve repeated use in separate experiments; do not dedupe
-across the episode. Every experiment must set `wiki_usage_status` to `declared` with non-empty usage,
+across the episode. The first experiment must account for the required query as either `declared`
+or `no_material_use`; it cannot claim `not_queried`. Every experiment must set
+`wiki_usage_status` to `declared` with non-empty usage,
 `no_material_use` when Wiki was queried without attributable use, or `not_queried` when it was not
 queried. For `declared` and `no_material_use`, include `wiki_query_ids` with every Wiki query considered
 by the experiment; omit it for `not_queried`. Record `evaluation.correctness`, `evaluation.performance`, optional evaluator latency/hash,
