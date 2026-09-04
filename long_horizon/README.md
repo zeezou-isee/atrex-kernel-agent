@@ -54,3 +54,12 @@ non-duplicated invocation total while phase attribution degrades fail-closed.
 verification payload, and telemetry available for that episode. These files are intentionally
 excluded from campaign commits. Accepted evidence is also written to committed
 `memory/long_horizon_eNNNN.json` and the canonical `memory/v<N>.json`.
+
+At process termination the orchestrator writes an ignored
+`trace-retention-manifest.json`. It declares only the candidate sources,
+canonical memory, episode journals and evaluations, Wiki query events, and
+compact profiler reports needed for offline knowledge extraction. It explicitly
+does not declare coding-agent session JSONL, stdout/stderr logs, temporary
+worktrees, caches, or bulk profiler captures. A deployment hook may use this
+manifest as producer evidence, but remains responsible for path validation,
+secret scanning, archive limits, transport, and retry.

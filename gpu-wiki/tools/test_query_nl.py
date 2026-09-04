@@ -573,6 +573,49 @@ class LauncherTests(unittest.TestCase):
                 else:
                     os.environ[query_nl.TASK_ID_ENV] = old_task
 
+    def test_profile_root_gets_immutable_query_identity_without_payloads(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp) / "profile"
+            old_root = os.environ.get(query_nl.wiki_trace.PROFILE_ROOT_ENV)
+            old_task = os.environ.get(query_nl.TASK_ID_ENV)
+            os.environ[query_nl.wiki_trace.PROFILE_ROOT_ENV] = str(root)
+            os.environ[query_nl.TASK_ID_ENV] = "test-op"
+            try:
+                with fake_bridge(stub_intent()):
+                    code, out, err = run_front_door(
+                        "fused rmsnorm in triton on sm_100",
+                        "--store-root", str(STORE), "--max-records", "2",
+                    )
+                self.assertEqual(code, 0, err)
+                answer = json.loads(out)
+                run = json.loads((root / "run.json").read_text())
+                events = list((root / "raw" / "query_events").glob("*/*.json"))
+                self.assertEqual(len(events), 1)
+                event = json.loads(events[0].read_text())
+                self.assertEqual(run["task_id"], "test-op")
+                self.assertEqual(event["run_id"], run["run_id"])
+                self.assertEqual(event["query_id"], answer["query_id"])
+                self.assertEqual(
+                    event["request"], "fused rmsnorm in triton on sm_100"
+                )
+                self.assertEqual(
+                    [row["wiki_id"] for row in event["returned_records"]],
+                    [row["wiki_id"] for row in answer["records"].values()],
+                )
+                self.assertIn("rmsnorm", event["normalized_keywords"])
+                self.assertIsInstance(event["latency_ms"], float)
+                self.assertNotIn("metric", event)
+                self.assertNotIn("payload", json.dumps(event))
+            finally:
+                if old_root is None:
+                    os.environ.pop(query_nl.wiki_trace.PROFILE_ROOT_ENV, None)
+                else:
+                    os.environ[query_nl.wiki_trace.PROFILE_ROOT_ENV] = old_root
+                if old_task is None:
+                    os.environ.pop(query_nl.TASK_ID_ENV, None)
+                else:
+                    os.environ[query_nl.TASK_ID_ENV] = old_task
+
     def test_launcher_captures_output(self):
         with TemporaryDirectory() as tmp:
             env = self.stub(Path(tmp), "echo out; echo err >&2; exit 3\n")

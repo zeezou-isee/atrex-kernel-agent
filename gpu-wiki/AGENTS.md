@@ -36,11 +36,12 @@ For attribution, copy the response's top-level `query_id` and each materially
 used record's own canonical `wiki_id`; never reconstruct either value from prose
 or from the backward-compatible mapping key.
 
-When a returned record materially informs an optimization decision, preserve its
-stable mapping key in that iteration's `memory/vN.json` under
-`wiki_references.kernel_wiki` or `wiki_references.hardware_wiki`. Retrieval alone
-does not count as adoption: do not record ids for payloads that were only read and
-rejected, and never copy payload text into this provenance field.
+When a returned record materially informs an optimization decision, preserve the
+emitted `query_id` and canonical `wiki_id` in that experiment's existing journal
+append. Retrieval alone does not count as adoption: use `no_material_use` when a
+query was considered but not used, and never copy payload text into attribution.
+The supervisor projects this compact evidence into canonical memory; the agent
+must not write a separate Wiki log or modify `memory/vN.json` itself.
 
 **Experience, addressed directly** (`kernel_wiki/records/`) — ranked, scoped search,
 for when you already know the exact address. Query it with
