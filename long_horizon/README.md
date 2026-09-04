@@ -60,6 +60,9 @@ At process termination the orchestrator writes an ignored
 canonical memory, episode journals and evaluations, Wiki query events, and
 compact profiler reports needed for offline knowledge extraction. It explicitly
 does not declare coding-agent session JSONL, stdout/stderr logs, temporary
-worktrees, caches, or bulk profiler captures. A deployment hook may use this
-manifest as producer evidence, but remains responsible for path validation,
-secret scanning, archive limits, transport, and retry.
+worktrees, caches, or bulk profiler captures. The manifest also binds the
+consumer-supplied `platform`, resolved `arch`, and `sandbox_hardware` to the run;
+these values are deployment evidence that cannot be reconstructed reliably from
+the workspace name or from a locally scoped `solution.json`. A deployment hook
+may use this manifest as producer evidence, but remains responsible for path
+validation, secret scanning, archive limits, transport, and retry.

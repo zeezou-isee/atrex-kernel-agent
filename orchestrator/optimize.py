@@ -791,7 +791,15 @@ def main(argv: Optional[list[str]] = None) -> int:
         trace_status = "interrupted"
         raise
     finally:
-        write_trace_retention_manifest(campaign.workspace, trace_status)
+        write_trace_retention_manifest(
+            campaign.workspace,
+            trace_status,
+            hardware={
+                "platform": args.platform,
+                "arch": arch or "",
+                "sandbox_hardware": sandbox_hardware,
+            },
+        )
 
 
 if __name__ == "__main__":

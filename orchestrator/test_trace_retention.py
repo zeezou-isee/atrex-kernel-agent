@@ -57,11 +57,24 @@ class TraceRetentionManifestTest(unittest.TestCase):
     def test_manifest_is_minimal_and_wiki_mining_sufficient(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace = self.workspace(Path(tmp))
-            manifest_path = write_trace_retention_manifest(workspace, "completed")
+            manifest_path = write_trace_retention_manifest(
+                workspace,
+                "completed",
+                hardware={
+                    "platform": "B300",
+                    "arch": "sm_103",
+                    "sandbox_hardware": "L20D",
+                },
+            )
             self.assertIsNotNone(manifest_path)
             manifest = json.loads(manifest_path.read_text())
             paths = {row["path"] for row in manifest["files"]}
             self.assertEqual(manifest["status"], "completed")
+            self.assertEqual(manifest["hardware"], {
+                "platform": "B300",
+                "arch": "sm_103",
+                "sandbox_hardware": "L20D",
+            })
             for required in (
                 "kernel.py",
                 "helper.cu",

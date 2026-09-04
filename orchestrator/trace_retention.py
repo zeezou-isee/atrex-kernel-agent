@@ -118,7 +118,12 @@ def collect_evidence_files(workspace: Path) -> list[dict[str, str]]:
     ]
 
 
-def write_trace_retention_manifest(workspace: Path, status: str) -> Path | None:
+def write_trace_retention_manifest(
+    workspace: Path,
+    status: str,
+    *,
+    hardware: dict[str, str] | None = None,
+) -> Path | None:
     """Atomically publish terminal evidence; never change optimization outcome."""
     if status not in TERMINAL_STATUSES:
         raise ValueError(f"unsupported trace retention status: {status}")
@@ -142,6 +147,13 @@ def write_trace_retention_manifest(workspace: Path, status: str) -> Path | None:
                 "dependency-caches",
             ],
         }
+        normalized_hardware = {
+            key: str((hardware or {}).get(key) or "").strip()
+            for key in ("platform", "arch", "sandbox_hardware")
+            if str((hardware or {}).get(key) or "").strip()
+        }
+        if normalized_hardware:
+            document["hardware"] = normalized_hardware
         temporary.write_text(
             json.dumps(document, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
