@@ -88,8 +88,9 @@ changes the expected result. Detailed within-episode journals remain archived un
 
 ## Wiki attribution contract
 
-At episode start, run exactly one bounded GPU Wiki query using the campaign's exact operator
-identifier rather than paraphrasing it:
+At episode start, run the required bounded GPU Wiki query once using the campaign's exact operator
+identifier rather than paraphrasing it. Additional targeted queries are allowed later when new
+evidence creates a materially different question:
 
 ```bash
 python3 gpu-wiki/tools/query_nl.py "Target hardware {{PLATFORM}}, DSL {{FRAMEWORK}}. Optimize operator {{OPERATOR}} and retrieve techniques and pitfalls and hardware facts." --brief
@@ -108,7 +109,9 @@ or `no_material_use`; it cannot claim `not_queried`. Every experiment must set
 `wiki_usage_status` to `declared` with non-empty usage,
 `no_material_use` when Wiki was queried without attributable use, or `not_queried` when it was not
 queried. For `declared` and `no_material_use`, include `wiki_query_ids` with every Wiki query considered
-by the experiment; omit it for `not_queried`. Record `evaluation.correctness`, `evaluation.performance`, optional evaluator latency/hash,
+by the experiment; omit it for `not_queried`. In later experiments, use `not_queried` when the
+experiment neither issued a new query nor reconsidered a previous response; do not carry an earlier
+query id forward unless its response informed that experiment. Record `evaluation.correctness`, `evaluation.performance`, optional evaluator latency/hash,
 and an explicit decision so attribution can be joined to the experiment outcome.
 Malformed Wiki telemetry is diagnostic only: the journal drops bad rows into `wiki_usage_errors`
 without invalidating the optimization experiment or its terminal handoff.

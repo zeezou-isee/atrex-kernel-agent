@@ -4,7 +4,9 @@
 The Wiki remains usable without telemetry.  A consumer enables immutable event
 files by setting ``ATREX_WIKI_PROFILE_ROOT`` to a directory it owns.  Events
 contain query scope and returned record identities, never returned payloads or
-coding-agent transcripts.
+coding-agent transcripts.  ``run.json`` identifies the lifetime of that profile
+root; each event independently records the current ``ATREX_WIKI_TASK_ID`` so a
+resumed workspace can be attributed to a new task without changing its run id.
 """
 from __future__ import annotations
 
@@ -35,6 +37,35 @@ def _read_json(path: Path) -> dict[str, Any] | None:
     return value if isinstance(value, dict) else None
 
 
+def _publish_create_only(temporary: Path, target: Path) -> bool:
+    """Publish a prepared file without requiring hardlink support.
+
+    Hardlinks preserve create-only behavior where available.  Some workspace
+    filesystems do not support them, so fall back to an exclusive create.  The
+    fallback may be observed while it is being copied, so callers re-read the
+    single run identity after publication.
+    """
+    try:
+        os.link(temporary, target)
+        return True
+    except FileExistsError:
+        return False
+    except OSError:
+        try:
+            descriptor = os.open(
+                target,
+                os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+                0o600,
+            )
+        except FileExistsError:
+            return False
+        with os.fdopen(descriptor, "wb") as output:
+            output.write(temporary.read_bytes())
+            output.flush()
+            os.fsync(output.fileno())
+        return True
+
+
 def _run_identity(root: Path) -> dict[str, Any]:
     path = root / "run.json"
     existing = _read_json(path)
@@ -55,9 +86,9 @@ def _run_identity(root: Path) -> dict[str, Any]:
             json.dumps(value, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
-        os.link(temporary, path)
-        return value
-    except FileExistsError:
+        if _publish_create_only(temporary, path):
+            published = _read_json(path)
+            return published or value
         existing = _read_json(path)
         if existing and existing.get("schema_version") == RUN_SCHEMA:
             return existing
@@ -67,18 +98,25 @@ def _run_identity(root: Path) -> dict[str, Any]:
 
 
 def store_revision(root: Path) -> str:
-    """Return a stable store snapshot id without opening individual records."""
+    """Hash every available index without opening individual records."""
     candidates = (
         root / "search_index" / "index.json",
         root / "kernel_wiki" / "records" / "index.json",
     )
+    digest = hashlib.sha256()
+    found = False
     for path in candidates:
         try:
             data = path.read_bytes()
         except OSError:
             continue
-        return "sha256:" + hashlib.sha256(data).hexdigest()
-    return "unavailable"
+        found = True
+        relative = path.relative_to(root).as_posix().encode("utf-8")
+        digest.update(len(relative).to_bytes(4, "big"))
+        digest.update(relative)
+        digest.update(len(data).to_bytes(8, "big"))
+        digest.update(data)
+    return "sha256:" + digest.hexdigest() if found else "unavailable"
 
 
 def write_query_event(
@@ -98,6 +136,7 @@ def write_query_event(
     root = Path(raw_root).expanduser().resolve()
     try:
         identity = _run_identity(root)
+        current_task_id = os.environ.get(TASK_ID_ENV, "").strip()
         timestamp = utc_now()
         target_dir = root / "raw" / "query_events" / timestamp[:10]
         target_dir.mkdir(parents=True, exist_ok=True)
@@ -112,6 +151,7 @@ def write_query_event(
             "event_id": event_id,
             "query_id": query_id,
             "run_id": identity["run_id"],
+            "task_id": current_task_id or identity.get("task_id"),
             "entrypoint": "query_nl",
             "timestamp": timestamp,
             "status": status,
@@ -135,7 +175,8 @@ def write_query_event(
                 json.dumps(event, ensure_ascii=False, indent=2, default=str) + "\n",
                 encoding="utf-8",
             )
-            os.link(temporary, target)
+            if not _publish_create_only(temporary, target):
+                raise FileExistsError(f"Wiki trace event already exists: {target}")
         finally:
             temporary.unlink(missing_ok=True)
         return target

@@ -58,8 +58,9 @@ canonical `memory/vN.json`; the supervisor writes and commits one for every term
 
 ## Required flow
 
-At episode start, run exactly one bounded GPU Wiki query using the campaign's exact operator
-identifier rather than paraphrasing it:
+At episode start, run the required bounded GPU Wiki query once using the campaign's exact operator
+identifier rather than paraphrasing it. Additional targeted queries are allowed later when new
+evidence creates a materially different question:
 
 ```bash
 python3 gpu-wiki/tools/query_nl.py "Target hardware {{PLATFORM}}, DSL {{FRAMEWORK}}. Optimize operator {{OPERATOR}} and retrieve techniques and pitfalls and hardware facts." --brief

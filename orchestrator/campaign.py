@@ -739,7 +739,7 @@ class Campaign:
         from long_horizon.store import CampaignStore
 
         self._assert_generalized_inputs_are_private()
-        CampaignStore.ensure_excluded(self.workspace)
+        CampaignStore.ensure_excluded(self.workspace, wiki_trace_only=True)
         native_root = Path(self.atrex_bench_root) if self.atrex_bench_root else None
         link_runtime(self.workspace, native_root)
         install_workspace_policy(

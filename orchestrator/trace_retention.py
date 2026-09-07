@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import sys
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
@@ -31,7 +32,12 @@ PROFILE_FILES = (
 def _safe_relative(workspace: Path, value: str) -> str | None:
     raw = value.split("#", 1)[0].replace("\\", "/").strip()
     path = PurePosixPath(raw)
-    if not raw or path.is_absolute() or ".." in path.parts or path.parts[0] == ".git":
+    if (
+        not raw
+        or path.is_absolute()
+        or ".." in path.parts
+        or ".git" in path.parts
+    ):
         return None
     source = workspace / path.as_posix()
     try:
@@ -159,7 +165,11 @@ def write_trace_retention_manifest(
             encoding="utf-8",
         )
         temporary.replace(path)
-    except Exception:
+    except Exception as exc:
         temporary.unlink(missing_ok=True)
+        print(
+            f"WARNING trace retention manifest could not be written: {exc}",
+            file=sys.stderr,
+        )
         return None
     return path

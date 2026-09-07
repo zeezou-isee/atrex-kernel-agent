@@ -40,8 +40,10 @@ When a returned record materially informs an optimization decision, preserve the
 emitted `query_id` and canonical `wiki_id` in that experiment's existing journal
 append. Retrieval alone does not count as adoption: use `no_material_use` when a
 query was considered but not used, and never copy payload text into attribution.
-The supervisor projects this compact evidence into canonical memory; the agent
-must not write a separate Wiki log or modify `memory/vN.json` itself.
+This repository persists the compact evidence in the experiment journal. Any
+projection into canonical memory belongs to the consuming integration and is
+outside this repository; the agent must not write a separate Wiki log or modify
+`memory/vN.json` itself.
 
 **Experience, addressed directly** (`kernel_wiki/records/`) — ranked, scoped search,
 for when you already know the exact address. Query it with
