@@ -121,7 +121,9 @@ class TraceRetentionManifestTest(unittest.TestCase):
                 environment["ATREX_WIKI_PROFILE_ROOT"],
                 str((campaign.workspace / ".gpu_wiki_profile").resolve()),
             )
-            self.assertEqual(environment["ATREX_WIKI_TASK_ID"], campaign.campaign_name)
+            self.assertEqual(
+                environment["ATREX_WIKI_TASK_ID"], campaign.campaign_name
+            )
             exclude = subprocess.run(
                 ["git", "-C", str(campaign.workspace), "rev-parse", "--git-path", "info/exclude"],
                 check=True, capture_output=True, text=True,
@@ -132,6 +134,37 @@ class TraceRetentionManifestTest(unittest.TestCase):
             text = exclude_path.read_text()
             self.assertIn("/.gpu_wiki_profile/", text)
             self.assertIn("/trace-retention-manifest.json", text)
+
+    def test_wiki_routing_coexists_with_ssh_recovery_environment(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            campaign = Campaign(
+                name="demo",
+                kernel_demo="reference.py",
+                platform="B300",
+                framework="Triton",
+                work_dir=str(root),
+                workspace_suffix="triton_b300",
+                sandbox_ssh="gpu-worker",
+                sandbox_ssh_init="source runtime/bin/activate",
+                sandbox_ssh_gpu=1,
+                sandbox_health_command="nvidia-smi -L",
+            )
+            environment = campaign.agent_environment(episode_mode="fast")
+            self.assertEqual(environment["ATREX_SANDBOX_SSH"], "gpu-worker")
+            self.assertEqual(
+                environment["ATREX_SANDBOX_SSH_INIT"],
+                "source runtime/bin/activate",
+            )
+            self.assertEqual(environment["ATREX_SANDBOX_SSH_GPU"], "1")
+            self.assertEqual(
+                environment["ATREX_SANDBOX_HEALTH_COMMAND"], "nvidia-smi -L"
+            )
+            self.assertEqual(
+                environment["ATREX_WIKI_PROFILE_ROOT"],
+                str((campaign.workspace / ".gpu_wiki_profile").resolve()),
+            )
+            self.assertEqual(environment["ATREX_WIKI_TASK_ID"], campaign.campaign_name)
 
 
 if __name__ == "__main__":
