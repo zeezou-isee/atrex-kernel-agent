@@ -86,6 +86,18 @@ def _run_identity(root: Path) -> dict[str, Any]:
             json.dumps(value, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
+        # A process can die while the no-hardlink O_EXCL fallback is copying
+        # the first identity.  Repair only a file that still fails validation;
+        # a concurrently completed valid identity always wins.
+        if path.exists():
+            existing = _read_json(path)
+            if existing and existing.get("schema_version") == RUN_SCHEMA:
+                return existing
+            temporary.replace(path)
+            published = _read_json(path)
+            if published and published.get("schema_version") == RUN_SCHEMA:
+                return published
+            raise RuntimeError(f"Wiki trace run identity repair failed: {path}")
         if _publish_create_only(temporary, path):
             published = _read_json(path)
             return published or value
@@ -128,6 +140,7 @@ def write_query_event(
     normalized_intents: list[dict[str, Any]],
     returned_records: list[dict[str, Any]],
     wiki_stores: list[dict[str, Any]],
+    retrieval_failures: list[dict[str, str]],
     metric: dict[str, Any],
 ) -> Path | None:
     raw_root = os.environ.get(PROFILE_ROOT_ENV, "").strip()
@@ -164,6 +177,7 @@ def write_query_event(
                 "served": len(returned_records),
             },
             "wiki_stores": wiki_stores,
+            "retrieval_failures": retrieval_failures,
             "returned_records": returned_records,
         }
         target = target_dir / f"{event_id}.json"

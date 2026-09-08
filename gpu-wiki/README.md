@@ -167,9 +167,10 @@ cannot anchor AKA's judgement.
 
 AKA sets `ATREX_WIKI_PROFILE_ROOT` to the incumbent campaign workspace. After
 CLI and request validation, `query_nl.py` writes one immutable, compact JSON
-event from its cleanup path, including dry-run and bridge/retrieval failure
-statuses. Argument-parse errors and invalid or empty requests rejected before a
-query workspace exists do not emit an event. Events contain the request,
+event from its cleanup path, including dry-run and bridge-failure statuses plus
+compact per-store retrieval-failure diagnostics. Argument-parse errors and
+invalid or empty requests rejected before a query workspace exists do not emit
+an event. Events contain the request,
 normalized scope, returned canonical IDs, rank, and timing; returned payloads
 and coding-agent sessions are not copied. Consumers outside AKA may set the same
 environment variable to an output directory they own; without it, querying

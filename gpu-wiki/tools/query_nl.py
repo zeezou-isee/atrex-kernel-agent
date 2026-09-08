@@ -1065,6 +1065,7 @@ def main(argv=None) -> int:
     records: dict[str, dict] = {}
     notes: list[str] = []
     wiki_stores: list[dict[str, object]] = []
+    retrieval_failures: list[dict[str, str]] = []
     selected_cli = os.environ.get(BRIDGE_CLI_ENV, agent_launch.DEFAULT_CLI)
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("request", nargs="*")
@@ -1204,6 +1205,10 @@ def main(argv=None) -> int:
             if not _queryable_store(current_root):
                 groups.append((store, {}))
                 notes.append("[%s] store unavailable; module returned empty" % store)
+                retrieval_failures.append({
+                    "store_id": store,
+                    "kind": "store_unavailable",
+                })
                 continue
             try:
                 normalized, current_notes = normalize_intent(
@@ -1221,6 +1226,11 @@ def main(argv=None) -> int:
                 )
             except (OSError, ValueError, KeyError) as exc:
                 groups.append((store, {}))
+                retrieval_failures.append({
+                    "store_id": store,
+                    "kind": "retrieval_error",
+                    "error_type": type(exc).__name__,
+                })
                 notes.append(
                     "[%s] retrieval failed; module returned empty: %s"
                     % (store, str(exc).splitlines()[0][:160])
@@ -1293,6 +1303,7 @@ def main(argv=None) -> int:
                 for rank, (rid, entry) in enumerate(records.items(), start=1)
             ],
             wiki_stores=wiki_stores,
+            retrieval_failures=retrieval_failures,
             metric=metric,
         )
 

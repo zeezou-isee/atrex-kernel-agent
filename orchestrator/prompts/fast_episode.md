@@ -63,7 +63,7 @@ identifier rather than paraphrasing it. Additional targeted queries are allowed 
 evidence creates a materially different question:
 
 ```bash
-python3 gpu-wiki/tools/query_nl.py "Target hardware {{PLATFORM}}, DSL {{FRAMEWORK}}. Optimize operator {{OPERATOR}} and retrieve techniques and pitfalls and hardware facts." --brief
+python3 gpu-wiki/tools/query_nl.py "Target hardware {{PLATFORM}}, DSL {{FRAMEWORK}}. Optimize operator {{OPERATOR}} and retrieve techniques and pitfalls." --brief
 ```
 
 Read only directly applicable returned records. Preserve the response's top-level `query_id` and

@@ -950,6 +950,19 @@ def _run_main(argv: Optional[list[str]] = None) -> int:
         convert_after=args.convert_after,
     )
     trace_status = "failed"
+    handled_signals = (signal.SIGTERM, signal.SIGHUP)
+    previous_handlers = {
+        handled_signal: signal.getsignal(handled_signal)
+        for handled_signal in handled_signals
+    }
+
+    def interrupt_campaign(signum: int, _frame: object) -> None:
+        nonlocal trace_status
+        trace_status = "interrupted"
+        raise SystemExit(128 + signum)
+
+    for handled_signal in handled_signals:
+        signal.signal(handled_signal, interrupt_campaign)
     try:
         if latest_version(campaign.workspace) < 0:
             campaign.setup_baseline()
@@ -988,6 +1001,8 @@ def _run_main(argv: Optional[list[str]] = None) -> int:
                 "sandbox_hardware": sandbox_hardware,
             },
         )
+        for handled_signal, previous_handler in previous_handlers.items():
+            signal.signal(handled_signal, previous_handler)
 
 
 def main(argv: Optional[list[str]] = None) -> int:

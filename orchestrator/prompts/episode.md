@@ -72,6 +72,8 @@ When conversion is mandatory, treat the whole episode as a Triton-to-Gluon lower
    The expected conversion record is `nvidia.blackwell.any.converter.blackwell` for `sm_100`/`sm_103`,
    `nvidia.hopper.any.converter.hopper` for `sm_90`, `amd.cdna3.any.converter.cdna3` for `gfx94*`, or
    `amd.cdna4.any.converter.cdna4` for `gfx95*`. Do not use a sibling architecture's conversion record.
+   This conversion-specific query replaces the general episode-start query below and counts as the
+   required query for Wiki attribution; do not issue the general query in addition.
 2. Extract TTGIR before writing Gluon and derive layouts from the real kernel; never fabricate them.
 3. Preserve algorithm, tiling, signatures, and evaluator behavior. Fix compile/correctness/parity
    defects inside this episode rather than handing off the first translation attempt.
@@ -93,7 +95,7 @@ identifier rather than paraphrasing it. Additional targeted queries are allowed 
 evidence creates a materially different question:
 
 ```bash
-python3 gpu-wiki/tools/query_nl.py "Target hardware {{PLATFORM}}, DSL {{FRAMEWORK}}. Optimize operator {{OPERATOR}} and retrieve techniques and pitfalls and hardware facts." --brief
+python3 gpu-wiki/tools/query_nl.py "Target hardware {{PLATFORM}}, DSL {{FRAMEWORK}}. Optimize operator {{OPERATOR}} and retrieve techniques and pitfalls." --brief
 ```
 
 GPU Wiki query responses emit a top-level `query_id`, and every returned record emits its own
